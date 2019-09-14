@@ -28,5 +28,7 @@ def index(container_id: int):
 
     return f"<!DOCTYPE html><html><body>Container {container_id} marked as full.</body></html>"
 
+
 if __name__ == "__main__":
+    create_db()
     app.run()
