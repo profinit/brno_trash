@@ -47,6 +47,11 @@ class State:
         df = pd.read_csv("stanoviste.csv")
         return df.iloc[active_bins]
 
+    def id_to_pos(self, id):
+        df = pd.read_csv("stanoviste.csv")
+        row =  df.iloc[id]
+        return (row['lat'], row['long'])
+
     def get_closest(self, a):
         return self.closest[a]
 
