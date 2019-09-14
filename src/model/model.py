@@ -17,7 +17,7 @@ class State:
         self.init_ratings()
         self.trucks = []
         self.no_truck_add_period = 0
-
+        self.df = pd.read_csv("stanoviste.csv")
         self.init_trucks(num_trucks)
         self.tick_length = tick_length
 
@@ -48,8 +48,7 @@ class State:
         return df.iloc[active_bins]
 
     def id_to_pos(self, id):
-        df = pd.read_csv("stanoviste.csv")
-        row =  df.iloc[id]
+        row =  self.df.iloc[id]
         return (row['lat'], row['long'])
 
     def get_closest(self, a):
@@ -59,7 +58,7 @@ class State:
         # TODO: Implement some clever init
         for i in range(num_trucks):
             pos = rnd.randint(0, self.num_position)
-            self.trucks.append(Truck(pos, id))
+            self.trucks.append(Truck(pos, i))
 
     def init_ratings(self):
         pass
@@ -82,7 +81,7 @@ class State:
         return [truck.pos for truck in self.trucks]
 
     def get_truck_id(self):
-        return [truck.id for truck in self.trucks]
+        return [truck.id_ for truck in self.trucks]
 
     def update_trucks(self):
         self.no_truck_add_period -= 1
@@ -106,9 +105,9 @@ class State:
         return response.json()["routes"][0]["geometry"]
 
 class Truck:
-    def __init__(self, pos, id, strategy="a_star"):
+    def __init__(self, pos, id_, strategy="a_star"):
         self.pos = pos
-        self.id = id
+        self.id_ = id_
         self.strategy = strategy
         self.path_dist = 0
         self.path = [pos]
@@ -142,7 +141,7 @@ class Truck:
             self.eta = min_cost
 
         elif self.strategy == "a_star":
-            depth_limit = 6
+            depth_limit = 3
             close_limit = 10
             # Current path, current depth, nodes of path
             heap = []
