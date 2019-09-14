@@ -1,7 +1,8 @@
 import random as rnd
-import heapq
+import pandas as pd
 import numpy as np
 import sqlite3
+import heapq
 
 
 class State:
@@ -34,6 +35,11 @@ class State:
         c.close()
 
         return result
+
+    def get_active_bins_positions(self):
+        active_bins = self.get_active_bins()
+        df = pd.read_csv("stanoviste.csv")
+        return df.iloc[active_bins]
 
     def get_closest(self, a):
         return self.closest[a]
@@ -144,12 +150,10 @@ class BinActivator:
                 status.activate_bin(i)
         elif self.strategy == "all":
             for i in range(status.num_position):
-                status.activate_bin(i)  
+                status.activate_bin(i)
 
 
 if __name__ == "__main__":
-    import pandas as pd
-
     df = pd.read_csv("distance_matrix.csv", header=None, delimiter="\t")
     df = df.iloc[:, :-1]
     state = State(df.values, 10)
