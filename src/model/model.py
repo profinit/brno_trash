@@ -1,6 +1,8 @@
 import random as rnd
 import heapq
 import numpy as np
+import sqlite3
+
 
 
 class State:
@@ -13,7 +15,6 @@ class State:
         self.init_ratings()
         self.trucks = []
         self.init_trucks(num_trucks)
-        self.active_bin = set()
 
     def next(self):
         for truck in self.trucks:
@@ -27,7 +28,13 @@ class State:
         return 0
 
     def get_active_bins(self):
-        return self.active_bin
+        conn = sqlite3.connect('active_containers.db')
+        c = conn.cursor()
+        result = c.execute(f"SELECT * from active_bins")
+        result = [x[0] for x in result]
+        c.close()
+
+        return result
 
     def get_closest(self, a):
         return self.closest[a]
@@ -42,11 +49,18 @@ class State:
         pass
 
     def activate_bin(self, pos):
-        # TODO: better datastructure
-        self.active_bin.add(pos)
+        conn = sqlite3.connect('active_containers.db')
+        c = conn.cursor()
+        c.execute(f"INSERT OR IGNORE INTO active_bins VALUES (?)", (pos,))
+        conn.commit()
+        c.close()
 
     def deactivate_bin(self, pos):
-        self.active_bin.remove(pos)
+        conn = sqlite3.connect('active_containers.db')
+        c = conn.cursor()
+        c.execute(f"DELETE FROM active_bins WHERE bin_id=?", (pos,))
+        conn.commit()
+        c.close()
 
     def get_truck_positions(self):
         return [truck.pos for truck in self.trucks]
@@ -72,7 +86,7 @@ class Truck:
             assert len(status.get_active_bins()) != 0
             for active in status.get_active_bins():
                 dist = status.get_dist(self.pos, active)
-                #TODO: Not returning for debugging
+                # TODO: Not returning for debugging
                 if active == self.pos or active in self.path:
                     continue
                 if min_cost == -1 or min_cost > dist:
@@ -103,6 +117,7 @@ class Truck:
                     node = closest_nodes[close_index]
                     if node in current[2] or node not in actives:
                         continue
+
                     close_visited += 1
                     dist = current[0] + status.get_dist(current_node, node)
                     #add heuristic
@@ -139,11 +154,12 @@ class BinActivator:
                 status.activate_bin(i)
         elif self.strategy == "all":
             for i in range(status.num_position):
-                status.activate_bin(i)
+                status.activate_bin(i)  
 
 
-if __name__ ==  "__main__":
+if __name__ == "__main__":
     import pandas as pd
+
     df = pd.read_csv("distance_matrix.csv", header=None, delimiter="\t")
     df = df.iloc[:, :-1]
     state = State(df.values, 10)
