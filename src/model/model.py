@@ -94,13 +94,11 @@ class State:
             self.trucks.append(Truck(pos, id))
             self.no_truck_add_period = 10
 
+    # Expects two tuples (lat,long), (lat,long)
     def get_route(self, from_pos, to_pos):
-        # TODO: Finish this
         query = f"http://172.16.20.100:5000/route/v1/driving/{from_pos[1]},{from_pos[0]};{to_pos[1]},{to_pos[0]}?geometries=geojson"
         response = requests.get(query)
-        durations = response.json()["routes"]["geometry"]
-        return 0
-
+        return response.json()["routes"][0]["geometry"]
 
 class Truck:
     def __init__(self, pos, id, strategy="a_star"):
@@ -201,10 +199,6 @@ class BinActivator:
 
 
 if __name__ == "__main__":
-    s = State(np.zeros(shape=(5, 5)), 4)
-    print(s.get_active_bins_positions())
-    exit(1)
-
     df = pd.read_csv("distance_matrix.csv", header=None, delimiter="\t")
     df = df.iloc[:, :-1]
     state = State(df.values, 10)
