@@ -30,9 +30,9 @@ class State:
         # TODO: Implement some clever init
         for i in range(num_trucks):
             pos = rnd.randint(0, self.num_position)
-            self.trucks.append(Truck(pos))
+            self.trucks.append(Truck(pos, id))
 
-    def init_rating(self):
+    def init_ratings(self):
         pass
 
     def activate_bin(self, pos):
@@ -42,12 +42,20 @@ class State:
     def deactivate_bin(self, pos):
         self.active_bin.remove(pos)
 
+    def get_truck_positions(self):
+        return [truck.pos for truck in self.trucks]
+
+    def get_truck_id(self):
+        return [truck.id for truck in self.trucks]
+
 
 class Truck:
-    def __init__(self, pos, strategy="greedy"):
+    def __init__(self, pos, id, strategy="greedy"):
         self.pos = pos
+        self.id = id
         self.strategy = strategy
-        self.path = 0
+        self.path_dist = 0
+        self.path = [pos]
         self.bins_counter = 0
 
     def next(self, status):
@@ -55,6 +63,7 @@ class Truck:
         if self.strategy == "greedy":
             min_cost = -1
             min_pos = -1
+            assert len(status.get_active()) != 0
             for active in status.get_active():
                 dist = status.get_dist(self.pos, active)
                 if min_cost == -1 or min_cost > dist:
@@ -63,8 +72,9 @@ class Truck:
             # Deactivate bin and change pos
             status.deactivate_bin(min_pos)
             self.pos = min_pos
+            self.path.append(self.pos)
             self.bins_counter += 1
-            self.path += min_cost
+            self.path_dist += min_cost
         else:
             raise Exception("")
 
@@ -74,5 +84,23 @@ class BinActivator:
         self.max_activate = activate
         self.strategy = strategy
 
-    def activate(self, Status):
-        return [rnd.randint(0, Status.num_position) for _ in range(rnd.randint(0, self.max_activate))]
+    def activate(self, status):
+        for i in  [rnd.randint(0, status.num_position) for _ in range(rnd.randint(0, self.max_activate))]:
+            status.activate_bin(i)
+
+if __name__ ==  "__main__":
+    import pandas as pd
+    df = pd.read_csv("distance_matrix.csv", header=None, delimiter="\t")
+    df = df.iloc[:, :-1]
+    state = State(df.values, 10)
+    bin_activator = BinActivator()
+    print(state.get_truck_positions())
+
+    for i in range(10):
+        bin_activator.activate(state)
+        state.next()
+        print(state.get_truck_positions())
+
+    for truck in state.trucks:
+        print(truck.path)
+            
