@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import requests
 import sqlite3
-import heapq
+
 
 
 class State:
@@ -34,7 +34,6 @@ class State:
         result = c.execute(f"SELECT * from active_bins")
         result = [x[0] for x in result]
         c.close()
-
         return result
 
     def get_active_bins_positions(self):
