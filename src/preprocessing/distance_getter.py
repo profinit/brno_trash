@@ -28,7 +28,7 @@ def get_batch_query(src_batch, tar_batch):
     src_longs = long[src_down:src_up]
 
     query = API_ENDPOINT
-    for i, j in zip(src_lats, src_longs):
+    for i, j in zip(src_longs, src_lats):
         query = f"{query}{i},{j};"
 
     # === TARGET COORDINATES ===
