@@ -1,5 +1,4 @@
 import random as rnd
-import heapq
 import numpy as np
 import sqlite3
 
@@ -33,7 +32,6 @@ class State:
         result = c.execute(f"SELECT * from active_bins")
         result = [x[0] for x in result]
         c.close()
-
         return result
 
     def get_closest(self, a):
