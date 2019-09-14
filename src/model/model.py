@@ -64,7 +64,6 @@ class Truck:
             min_cost = -1
             min_pos = -1
             assert len(status.get_active_bins()) != 0
-            print(len(status.get_active_bins()))
             for active in status.get_active_bins():
                 dist = status.get_dist(self.pos, active)
                 #TODO: Not returning for debugging
