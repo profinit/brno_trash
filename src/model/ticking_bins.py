@@ -1,4 +1,4 @@
-from scipy.stats import expon
+import time
 import random as rnd
 import sqlite3
 
@@ -26,3 +26,4 @@ if __name__ == "__main__":
             c.execute(f"INSERT OR IGNORE INTO active_bins VALUES (?)", (i,))
             conn.commit()
             c.close()
+        time.sleep(30)
