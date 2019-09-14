@@ -4,10 +4,11 @@ import numpy as np
 import requests
 import sqlite3
 
-
+MIN_BIN_LIMIT = 500
+MAX_BIN_LIMIT = 2000
 
 class State:
-    def __init__(self, matrix, num_trucks):
+    def __init__(self, matrix, num_trucks, tick_length=60):
         assert matrix.ndim == 2
         assert matrix.shape[0] == matrix.shape[1]
         self.matrix = matrix
@@ -15,9 +16,14 @@ class State:
         self.num_position = matrix.shape[0]
         self.init_ratings()
         self.trucks = []
+        self.no_truck_add_period = 0
+
         self.init_trucks(num_trucks)
+        self.tick_length = tick_length
 
     def next(self):
+        self.update_trucks()
+
         for truck in self.trucks:
             truck.next(self)
 
@@ -73,6 +79,21 @@ class State:
     def get_truck_id(self):
         return [truck.id for truck in self.trucks]
 
+    def update_trucks(self):
+        self.no_truck_add_period -= 1
+        if self.no_truck_add_period > 0:
+            return
+
+        active_bins = self.get_active_bins()
+        if len(active_bins) < MIN_BIN_LIMIT:
+            self.trucks = self.trucks[:-1]
+            self.no_truck_add_period = 10
+
+        if len(active_bins) > MAX_BIN_LIMIT:
+            pos = rnd.randint(0, self.num_position)
+            self.trucks.append(Truck(pos, id))
+            self.no_truck_add_period = 10
+
     def get_route(self, from_pos, to_pos):
         # TODO: Finish this
         query = f"http://172.16.20.100:5000/route/v1/driving/{from_pos[1]},{from_pos[0]};{to_pos[1]},{to_pos[0]}?geometries=geojson"
@@ -89,8 +110,13 @@ class Truck:
         self.path_dist = 0
         self.path = [pos]
         self.bins_counter = 0
+        self.eta = 0
 
     def next(self, status):
+        if self.eta > 0:
+            self.eta -= status.tick_length
+            return
+
         # TODO A* or anything
         if self.strategy == "greedy":
             min_cost = -1
@@ -110,6 +136,8 @@ class Truck:
             self.path.append(self.pos)
             self.bins_counter += 1
             self.path_dist += min_cost
+            self.eta = min_cost
+
         elif self.strategy == "a_star":
             depth_limit = 6
             close_limit = 10
@@ -146,8 +174,11 @@ class Truck:
 
             # shortest at this depth level
             self.path_dist += status.get_dist(self.pos, current[1])
+            self.eta = status.get_dist(self.pos, current[1])
+
             self.pos = current[2][1]
             self.path = np.append(self.path, current[2][1])
+
             self.bins_counter += 1
             status.deactivate_bin(self.pos)
 
@@ -170,6 +201,10 @@ class BinActivator:
 
 
 if __name__ == "__main__":
+    s = State(np.zeros(shape=(5, 5)), 4)
+    print(s.get_active_bins_positions())
+    exit(1)
+
     df = pd.read_csv("distance_matrix.csv", header=None, delimiter="\t")
     df = df.iloc[:, :-1]
     state = State(df.values, 10)
