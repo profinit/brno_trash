@@ -1,6 +1,6 @@
 # DISCLAIMER: Hackathon spaghetti code, use at your own risk.
 # Script for generating full distance matrix using the Open Source Routing Machine
-# https://wiki.openstreetmap.org/wiki/Open_Source_Routing_Machine
+# LINKS: https://wiki.openstreetmap.org/wiki/Open_Source_Routing_Machine
 
 from scipy.sparse import dok_matrix
 import pandas as pd

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>{{ "Ahoj" }}</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.5.1/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.5.1/dist/leaflet.js"></script>
+    <style>
+      #mapid { height: 720px; width: 1280px; }
+
+
+    </style>
+</head>
+<body>
+<div id='mapid'></div>
+<script type="text/javascript" src="{{ url_for('static', filename='map.js') }}"></script>
+<script>
+    var marker = L.marker({{ context.coords }}).addTo(mymap);
+</script>
+<form action="http://localhost:5000/click" method="post">
+    <p>Enter Name:</p>
+    <p><input type="text" name="nm"/></p>
+    <p><input type="submit" value="submit"/></p>
+</form>
+</body>
+</html>
