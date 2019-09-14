@@ -1,8 +1,8 @@
 import random as rnd
 import pandas as pd
 import numpy as np
+import requests
 import sqlite3
-
 
 
 
@@ -73,6 +73,13 @@ class State:
     def get_truck_id(self):
         return [truck.id for truck in self.trucks]
 
+    def get_route(self, from_pos, to_pos):
+        # TODO: Finish this
+        query = f"http://172.16.20.100:5000/route/v1/driving/{from_pos[1]},{from_pos[0]};{to_pos[1]},{to_pos[0]}?geometries=geojson"
+        response = requests.get(query)
+        durations = response.json()["routes"]["geometry"]
+        return 0
+
 
 class Truck:
     def __init__(self, pos, id, strategy="a_star"):
@@ -125,7 +132,7 @@ class Truck:
 
                     close_visited += 1
                     dist = current[0] + status.get_dist(current_node, node)
-                    #add heuristic
+                    # add heuristic
                     dist += status.get_h(node)
                     path = np.append(current[2], node)
                     depth = current[1] + 1
