@@ -10,7 +10,7 @@ class State:
         self.init_ratings()
         self.trucks = []
         self.init_trucks(num_trucks)
-        self.active_bin = []
+        self.active_bin = set()
 
     def next(self):
         for truck in self.trucks:
@@ -23,7 +23,7 @@ class State:
         # TODO: Implement some heuristic
         return 0
 
-    def get_active(self):
+    def get_active_bins(self):
         return self.active_bin
 
     def init_trucks(self, num_trucks):
@@ -37,7 +37,7 @@ class State:
 
     def activate_bin(self, pos):
         # TODO: better datastructure
-        self.active_bin.append(pos)
+        self.active_bin.add(pos)
 
     def deactivate_bin(self, pos):
         self.active_bin.remove(pos)
@@ -63,9 +63,13 @@ class Truck:
         if self.strategy == "greedy":
             min_cost = -1
             min_pos = -1
-            assert len(status.get_active()) != 0
-            for active in status.get_active():
+            assert len(status.get_active_bins()) != 0
+            print(len(status.get_active_bins()))
+            for active in status.get_active_bins():
                 dist = status.get_dist(self.pos, active)
+                #TODO: Not returning for debugging
+                if active == self.pos or active in self.path:
+                    continue
                 if min_cost == -1 or min_cost > dist:
                     min_cost = dist
                     min_pos = active
@@ -85,8 +89,13 @@ class BinActivator:
         self.strategy = strategy
 
     def activate(self, status):
-        for i in  [rnd.randint(0, status.num_position) for _ in range(rnd.randint(0, self.max_activate))]:
-            status.activate_bin(i)
+        if self.strategy == "random":
+            for i in [rnd.randint(0, status.num_position) for _ in range(rnd.randint(0, self.max_activate))]:
+                status.activate_bin(i)
+        elif self.strategy == "all":
+            for i in range(status.num_position):
+                status.activate_bin(i)
+
 
 if __name__ ==  "__main__":
     import pandas as pd
@@ -103,4 +112,3 @@ if __name__ ==  "__main__":
 
     for truck in state.trucks:
         print(truck.path)
-            
