@@ -5,6 +5,7 @@ import sqlite3
 import heapq
 
 
+
 class State:
     def __init__(self, matrix, num_trucks):
         assert matrix.ndim == 2
@@ -104,43 +105,52 @@ class Truck:
             self.bins_counter += 1
             self.path_dist += min_cost
         elif self.strategy == "a_star":
-            depth_limit = 10
-            close_limit = 20
+            depth_limit = 6
+            close_limit = 10
             # Current path, current depth, nodes of path
             heap = []
             current = (0, 0, [self.pos])
-            visited = set([self.pos])
             actives = status.get_active_bins()
 
             while current[1] < depth_limit:
                 current_node = current[2][-1]
                 closest_nodes = status.get_closest(current_node)
                 close_index = 0
-                while close_index < close_limit:
+                close_visited = 0
+                while close_visited < close_limit:
+                    close_index += 1
+                    assert close_index < status.num_position
                     node = closest_nodes[close_index]
-                    visited.add(node)
-                    if node in visited or node not in actives:
+                    if node in current[2] or node not in actives:
                         continue
 
-                    dist = status.get_dist(current_node, node)
-                    # add heuristic
+                    close_visited += 1
+                    dist = current[0] + status.get_dist(current_node, node)
+                    #add heuristic
                     dist += status.get_h(node)
-                    path = current[2].append(node)
+                    path = np.append(current[2], node)
                     depth = current[1] + 1
-                    heapq.heappush(heap, (dist, depth, path))
+                    heap.append((dist, depth, path))
 
-                current = heapq.heappop(heap)
+                current = heap[0]
+                for c in heap:
+                    if c[0] < current[0]:
+                        current = c
+                heap.remove(current)
+
             # shortest at this depth level
-            self.pos = current[2][-1]
-            self.path = current[2]
-            self.bins_counter = len(current[2])
-            self.path_dist = current[1]
+            self.path_dist += status.get_dist(self.pos, current[1])
+            self.pos = current[2][1]
+            self.path = np.append(self.path, current[2][1])
+            self.bins_counter += 1
+            status.deactivate_bin(self.pos)
+
         else:
             raise Exception("")
 
 
 class BinActivator:
-    def __init__(self, activate=100, strategy="random"):
+    def __init__(self, activate=100, strategy="all"):
         self.max_activate = activate
         self.strategy = strategy
 
@@ -158,12 +168,10 @@ if __name__ == "__main__":
     df = df.iloc[:, :-1]
     state = State(df.values, 10)
     bin_activator = BinActivator()
-    print(state.get_truck_positions())
 
-    for i in range(10):
-        bin_activator.activate(state)
+    bin_activator.activate(state)
+    for i in range(100):
         state.next()
-        print(state.get_truck_positions())
 
     for truck in state.trucks:
         print(truck.path)
