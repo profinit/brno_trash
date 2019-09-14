@@ -1,11 +1,13 @@
 import random as rnd
-
+import heapq
+import numpy as np
 
 class State:
     def __init__(self, matrix, num_trucks):
         assert matrix.ndim == 2
         assert matrix.shape[0] == matrix.shape[1]
         self.matrix = matrix
+        self.closest = np.argsort(matrix, axis=1)
         self.num_position = matrix.shape[0]
         self.init_ratings()
         self.trucks = []
@@ -25,6 +27,9 @@ class State:
 
     def get_active_bins(self):
         return self.active_bin
+
+    def get_closest(self, a):
+        return self.closest[a]
 
     def init_trucks(self, num_trucks):
         # TODO: Implement some clever init
@@ -50,7 +55,7 @@ class State:
 
 
 class Truck:
-    def __init__(self, pos, id, strategy="greedy"):
+    def __init__(self, pos, id, strategy="a_star"):
         self.pos = pos
         self.id = id
         self.strategy = strategy
@@ -78,6 +83,38 @@ class Truck:
             self.path.append(self.pos)
             self.bins_counter += 1
             self.path_dist += min_cost
+        elif self.strategy == "a_star":
+            depth_limit = 10
+            close_limit = 20
+            # Current path, current depth, nodes of path
+            heap = []
+            current = (0, 0, [self.pos])
+            visited = set([self.pos])
+            actives = status.get_active_bins()
+
+            while current[1] < depth_limit:
+                current_node = current[2][-1]
+                closest_nodes = status.get_closest(current_node)
+                close_index = 0
+                while close_index < close_limit:
+                    node = closest_nodes[close_index]
+                    visited.add(node)
+                    if node in visited or node not in actives:
+                        continue
+
+                    dist = status.get_dist(current_node, node)
+                    #add heuristic
+                    dist += status.get_h(node)
+                    path = current[2].append(node)
+                    depth = current[1] + 1
+                    heapq.heappush(heap, (dist, depth, path))
+
+                current = heapq.heappop(heap)
+            # shortest at this depth level
+            self.pos = current[2][-1]
+            self.path = current[2]
+            self.bins_counter = len(current[2])
+            self.path_dist = current[1]
         else:
             raise Exception("")
 
